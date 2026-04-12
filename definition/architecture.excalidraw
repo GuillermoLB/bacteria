@@ -1,0 +1,123 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {"type":"text","id":"title","x":340,"y":10,"width":520,"height":36,"text":"Bacteria — AI Operating System","fontSize":28,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"zone1","x":20,"y":80,"width":320,"height":420,"backgroundColor":"#dbe4ff","fillStyle":"solid","strokeColor":"#4a9eed","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"zone1l","x":60,"y":88,"width":240,"height":20,"text":"Layer 1 — Trigger-Based","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#2563eb","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"internet","x":60,"y":30,"width":240,"height":40,"backgroundColor":"#ffc9c9","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#ef4444","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"internetl","x":70,"y":42,"width":220,"height":20,"text":"Internet (webhooks / API calls)","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_int_caddy","x":180,"y":70,"width":0,"height":50,"points":[[0,0],[0,50]],"strokeColor":"#ef4444","strokeWidth":2,"endArrowhead":"arrow"},
+
+    {"type":"rectangle","id":"caddy","x":60,"y":120,"width":240,"height":55,"backgroundColor":"#a5d8ff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#4a9eed","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"caddyl","x":70,"y":140,"width":220,"height":20,"text":"Caddy (Reverse Proxy + HTTPS)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_caddy_api","x":180,"y":175,"width":0,"height":40,"points":[[0,0],[0,40]],"strokeColor":"#1e1e1e","strokeWidth":2,"endArrowhead":"arrow"},
+
+    {"type":"rectangle","id":"fastapi","x":60,"y":215,"width":240,"height":55,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"fastapil","x":70,"y":235,"width":220,"height":20,"text":"FastAPI (Webhook Endpoints)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_api_queue","x":180,"y":270,"width":0,"height":55,"points":[[0,0],[0,55]],"strokeColor":"#1e1e1e","strokeWidth":2,"endArrowhead":"arrow"},
+    {"type":"text","id":"a_api_queuel","x":185,"y":285,"width":130,"height":18,"text":"persist + enqueue","fontSize":13,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#555555","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"queue","x":60,"y":325,"width":240,"height":55,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"queuel","x":70,"y":345,"width":220,"height":20,"text":"Job Queue (DB-backed)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_queue_worker","x":180,"y":380,"width":0,"height":40,"points":[[0,0],[0,40]],"strokeColor":"#1e1e1e","strokeWidth":2,"endArrowhead":"arrow"},
+
+    {"type":"rectangle","id":"worker","x":60,"y":420,"width":240,"height":55,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"workerl","x":70,"y":440,"width":220,"height":20,"text":"Workers (job execution)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"zone2","x":360,"y":80,"width":320,"height":180,"backgroundColor":"#e5dbff","fillStyle":"solid","strokeColor":"#8b5cf6","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"zone2l","x":390,"y":88,"width":260,"height":20,"text":"Layer 2 — Scheduled","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#6d28d9","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"scheduler","x":400,"y":120,"width":240,"height":55,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"schedulerl","x":410,"y":140,"width":220,"height":20,"text":"Scheduler (cron triggers)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_sched_queue","x":400,"y":152,"width":-100,"height":193,"points":[[0,0],[-100,193]],"strokeColor":"#8b5cf6","strokeWidth":2,"endArrowhead":"arrow","strokeStyle":"dashed"},
+
+    {"type":"rectangle","id":"scheddb","x":400,"y":195,"width":240,"height":50,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"schdbl","x":410,"y":213,"width":220,"height":18,"text":"schedules table (PostgreSQL)","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"zone3","x":360,"y":290,"width":320,"height":210,"backgroundColor":"#d3f9d8","fillStyle":"solid","strokeColor":"#22c55e","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"zone3l","x":385,"y":298,"width":260,"height":20,"text":"Layer 3 — Agent Layer","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#15803d","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"agentrunner","x":400,"y":330,"width":240,"height":55,"backgroundColor":"#b2f2bb","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"agentrunnerl","x":410,"y":350,"width":220,"height":20,"text":"Agent Runner (pluggable)","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_runner_prov","x":520,"y":385,"width":0,"height":25,"points":[[0,0],[0,25]],"strokeColor":"#22c55e","strokeWidth":2,"endArrowhead":"arrow"},
+
+    {"type":"rectangle","id":"agentproviders","x":400,"y":410,"width":240,"height":70,"backgroundColor":"#fff3bf","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"agentprovidersl","x":410,"y":430,"width":220,"height":36,"text":"Claude SDK / Pydantic AI\nRaw LLM / LangGraph","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"dbzone","x":20,"y":510,"width":660,"height":160,"backgroundColor":"#c3fae8","fillStyle":"solid","strokeColor":"#22c55e","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"dbzonel","x":50,"y":518,"width":300,"height":20,"text":"Data Layer — PostgreSQL","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#15803d","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"jobstbl","x":40,"y":550,"width":160,"height":55,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"jobstbll","x":50,"y":570,"width":140,"height":20,"text":"jobs table","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"eventstbl","x":220,"y":550,"width":160,"height":55,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"eventstbll","x":230,"y":570,"width":140,"height":20,"text":"events table","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"schedstbl","x":400,"y":550,"width":160,"height":55,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"schedstbll","x":410,"y":570,"width":140,"height":20,"text":"schedules table","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"resultstbl","x":225,"y":620,"width":150,"height":40,"backgroundColor":"#fff3bf","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"resultstbll","x":235,"y":633,"width":130,"height":18,"text":"results / audit log","fontSize":13,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_worker_db","x":180,"y":475,"width":0,"height":35,"points":[[0,0],[0,35]],"strokeColor":"#22c55e","strokeWidth":2,"endArrowhead":"arrow"},
+
+    {"type":"rectangle","id":"ctxzone","x":700,"y":80,"width":280,"height":250,"backgroundColor":"#ffd8a8","fillStyle":"solid","strokeColor":"#f59e0b","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"ctxzonel","x":720,"y":88,"width":240,"height":20,"text":"Context Hub","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#9a5030","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"identity","x":720,"y":120,"width":240,"height":40,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"identityl","x":730,"y":133,"width":220,"height":18,"text":"identity/ (soul.md)","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"areas","x":720,"y":170,"width":240,"height":40,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"areasl","x":730,"y":183,"width":220,"height":18,"text":"areas/ — ongoing domains","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"projects","x":720,"y":220,"width":240,"height":40,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"projectsl","x":730,"y":233,"width":220,"height":18,"text":"projects/ — active work","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"knowledge","x":720,"y":270,"width":240,"height":40,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"knowledgel","x":730,"y":283,"width":220,"height":18,"text":"knowledge/ — SOPs, docs","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"obszone","x":700,"y":350,"width":280,"height":150,"backgroundColor":"#eebefa","fillStyle":"solid","strokeColor":"#ec4899","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"obszonel","x":720,"y":358,"width":240,"height":20,"text":"Observability","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#9d174d","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"sentry","x":720,"y":390,"width":110,"height":40,"backgroundColor":"#eebefa","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#ec4899","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"sentryl","x":730,"y":403,"width":90,"height":18,"text":"Sentry","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"grafana","x":845,"y":390,"width":115,"height":40,"backgroundColor":"#eebefa","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#ec4899","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"grafanal","x":855,"y":403,"width":95,"height":18,"text":"Grafana","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"structlog","x":720,"y":440,"width":240,"height":40,"backgroundColor":"#eebefa","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#ec4899","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"structlogl","x":730,"y":453,"width":220,"height":18,"text":"Structured logs + DB audit trail","fontSize":13,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"memzone","x":700,"y":520,"width":280,"height":100,"backgroundColor":"#d0bfff","fillStyle":"solid","strokeColor":"#8b5cf6","strokeWidth":2,"roundness":{"type":3},"opacity":40},
+    {"type":"text","id":"memzonel","x":720,"y":528,"width":240,"height":20,"text":"Memory","fontSize":16,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#6d28d9","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"shortterm","x":720,"y":558,"width":120,"height":40,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"shortterml","x":730,"y":571,"width":100,"height":18,"text":"Short-term","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"longterm","x":855,"y":558,"width":105,"height":40,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"longterml","x":865,"y":571,"width":85,"height":18,"text":"Long-term","fontSize":14,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_worker_ctx","x":300,"y":447,"width":420,"height":-250,"points":[[0,0],[420,-250]],"strokeColor":"#f59e0b","strokeWidth":2,"endArrowhead":"arrow","strokeStyle":"dashed"},
+    {"type":"text","id":"a_worker_ctxl","x":450,"y":310,"width":120,"height":18,"text":"reads context","fontSize":13,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#9a5030","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100},
+
+    {"type":"arrow","id":"a_worker_mem","x":300,"y":460,"width":420,"height":120,"points":[[0,0],[420,120]],"strokeColor":"#8b5cf6","strokeWidth":2,"endArrowhead":"arrow","strokeStyle":"dashed"},
+    {"type":"text","id":"a_worker_meml","x":430,"y":540,"width":160,"height":18,"text":"reads/writes memory","fontSize":13,"fontFamily":1,"textAlign":"left","verticalAlign":"top","strokeColor":"#6d28d9","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100},
+
+    {"type":"rectangle","id":"joblifecycle","x":360,"y":640,"width":300,"height":55,"backgroundColor":"#fff3bf","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"opacity":100},
+    {"type":"text","id":"joblifecyclel","x":370,"y":653,"width":280,"height":36,"text":"Job: PENDING > CLAIMED > RUNNING\n> COMPLETED / FAILED (retry)","fontSize":13,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100}
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}
