@@ -3,5 +3,18 @@
     "excalidraw": {
       "url": "https://api.excalidraw.com/api/v1/mcp"
     }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit(src/)|Write(src/)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before implementing, check if there's a spec in specs/features/. If starting a new feature, suggest writing a spec first."
+          }
+        ]
+      }
+    ]
   }
 }
