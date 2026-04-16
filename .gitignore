@@ -39,3 +39,7 @@ htmlcov/
 
 # Logs
 *.log
+
+# references
+
+references/
