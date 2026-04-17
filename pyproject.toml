@@ -1,13 +1,26 @@
 [project]
 name = "bacteria"
 version = "0.1.0"
-description = "Add your description here"
+description = "A self-hosted AI operating system — trigger-based automations, scheduled workflows, and conversational agents under one infrastructure."
 readme = "README.md"
 authors = [
     { name = "GuillermoLB", email = "guillelb99@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg[binary]>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]
 
 [project.scripts]
 bacteria = "bacteria:main"

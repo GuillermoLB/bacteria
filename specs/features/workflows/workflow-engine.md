@@ -2,7 +2,7 @@
 
 **Status**: Draft
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-13
+**Last Updated**: 2026-04-17
 
 ## Purpose
 
@@ -44,13 +44,26 @@ The shared state that flows through a workflow. A Pydantic model — immutable, 
 class Context(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    job: Job
-    event: Event | None = None
+    # Core — always present
     raw_payload: dict = {}
-    payload: dict = {}
-    intent: str | None = None
+
+    # Set by ParsePayloadNode
+    event: Event | None = None
+
+    # Set by LoadContextNode
+    sender_memory: str | None = None
+
+    # Set by RunAgentNode
     agent_result: str | None = None
+
+    # Set by SendReplyNode
+    delivered: bool = False
+
+    # Set by queue-backed workflows only
+    job: Job | None = None
 ```
+
+Fields are optional by default — not every workflow sets every field. A CLI workflow has no `job`. A webhook workflow has no `sender_memory` until `LoadContextNode` runs.
 
 Context is a domain type. It knows nothing about the workflow engine. Nodes that return `Context` are decoupled from infrastructure.
 
@@ -190,20 +203,32 @@ Workflow files in `workflows/` are not class definitions — they are module-lev
 - No `StepHandler` / `FunctionalProcessor` wrapping layers — a node is just a class with `run()`
 - No subclassing `Workflow` per use case — `Workflow` is generic, instances carry the variation
 
+## Phase 1 scope (CLI agent)
+
+For the CLI agent phase, only these are needed:
+
+- `Node` protocol
+- `Context` model (without `job` — CLI has no queue)
+- `Workflow` executor (sequential only)
+
+Branching, parallelism, and the `WorkflowRegistry` are deferred to the queue/worker phase.
+
 ## Acceptance Criteria
 
-- [ ] `Node` protocol defined in `nodes/`
-- [ ] `Context` Pydantic model defined in `entities/`
-- [ ] `Workflow` generic class defined in `workflows/`
-- [ ] Worker dispatches jobs via registry lookup `(source, event_type) → Workflow`
-- [ ] At least one concrete workflow wired and tested end-to-end (worker → workflow → nodes)
-- [ ] Branch node pattern tested: `RouteByIntentNode` delegates to correct sub-workflow
+- [ ] `Node` protocol defined in `nodes/__init__.py`
+- [ ] `Context` Pydantic model defined in `entities/context.py`
+- [ ] `Workflow` generic class defined in `workflows/__init__.py`
+- [ ] `Workflow.run()` executes nodes sequentially, passing context through
 - [ ] No node imports from `api/` or `worker/` (inner layer boundary enforced)
+
+Deferred (queue/worker phase):
+- [ ] `WorkflowRegistry` maps `event_type → Workflow`
+- [ ] Branch node pattern (`RouteByIntentNode`)
+- [ ] `ParallelNode`
 
 ## Dependencies
 
-- `specs/features/scaffold/project-scaffold.md` — module structure must exist first
-- `specs/features/queue/` — worker must be able to claim jobs before workflows run (not yet written)
+- `specs/features/scaffold/project-scaffold.md` — Implemented
 
 ---
 

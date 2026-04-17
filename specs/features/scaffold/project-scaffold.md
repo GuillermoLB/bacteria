@@ -1,6 +1,6 @@
 # Feature: Project Scaffold
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
 **Last Updated**: 2026-04-12
 **Priority**: High
@@ -11,12 +11,12 @@ Establish the full `src/bacteria/` module structure so every future feature has 
 
 ## Requirements
 
-- [ ] All modules listed in `specs/architecture/architecture.md` exist as Python packages (directories with `__init__.py`)
-- [ ] `pyproject.toml` is correctly configured: package name, version, `requires-python`, entry point
-- [ ] A `settings.py` exists in `src/bacteria/` with nested Pydantic Settings groups (one per subsystem), using `get_settings()` + `@lru_cache`
-- [ ] A `dependencies.py` exists at `src/bacteria/` — empty composition root, ready to be filled
-- [ ] `tests/` mirrors the `src/bacteria/` structure with one placeholder test file
-- [ ] The project runs `uv run python -c "import bacteria"` without errors
+- [x] All modules listed in `specs/architecture/architecture.md` exist as Python packages (directories with `__init__.py`)
+- [x] `pyproject.toml` is correctly configured: package name, version, `requires-python`, entry point
+- [x] A `settings.py` exists in `src/bacteria/` with nested Pydantic Settings groups (one per subsystem), using `get_settings()` + `@lru_cache`
+- [x] A `dependencies.py` exists at `src/bacteria/` — empty composition root, ready to be filled
+- [x] `tests/` mirrors the `src/bacteria/` structure with one placeholder test file
+- [x] The project runs `uv run python -c "import bacteria"` without errors
 
 ## Structure
 
@@ -153,16 +153,15 @@ Then no circular import errors appear
 
 ## Dependencies
 
-- [ ] **pydantic-settings**: Required for `Settings` classes
-- [ ] **psycopg**: Required for the Postgres URL driver prefix (added here, used in `db/`)
+- [x] **pydantic-settings**: Required for `Settings` classes
+- [x] **psycopg[binary]**: Required for the Postgres URL driver prefix (added here, used in `db/`)
 
 ## Implementation
 
-> Fill in after implementation.
-
-- **Source**: `src/bacteria/`
-- **Tests**: `tests/`
+- **Source**: `src/bacteria/` — all modules created as packages; `settings.py` and `dependencies.py` at root
+- **Tests**: `tests/test_scaffold.py` — 20 tests: importability for all 18 modules + settings lru_cache + postgres URL format
+- **Note**: `psycopg[async]` extra does not exist in v3 (async is built-in); used `psycopg[binary]` instead
 
 ---
 
-**Status History**: Draft (2026-04-12)
+**Status History**: Draft (2026-04-12) → Implemented (2026-04-16)

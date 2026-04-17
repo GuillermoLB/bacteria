@@ -28,10 +28,9 @@ POST /webhooks/whatsapp
 
   → [Job 2] AgentRequestJob       (queue: "agents")
       AgentRequestWorkflow
-        LoadIdentityNode
-        LoadSkillsNode
-        LoadContextNode
+        LoadContextNode           → context/memory/{sender_id}.md
         RunAgentNode              → agentic loop (tools, turns, reasoning)
+        SaveMessageNode           → appends turn to memory file
         SendReplyNode             → POST to WhatsApp API
       → COMPLETED
 ```
@@ -97,32 +96,25 @@ Context(
 
 ### Nodes
 
-**`LoadIdentityNode`**
-- Reads `soul.md` from the Context Hub (`context/identity/soul.md`)
-- Sets `ctx.identity` — the agent's name, personality, values
-- Loaded once per job run, injected at the top of the system prompt
-
-**`LoadSkillsNode`**
-- Reads skill markdown files from `skills/` relevant to this channel/context
-- Sets `ctx.skills` — list of skill prompt sections
-- Skills are markdown files, not Python code — loaded and injected into the system prompt
-
 **`LoadContextNode`**
-- Loads conversation history for `sender_id` from DB (short-term memory)
-- Optionally loads relevant long-term memory entries
-- Sets `ctx.history` — ordered list of prior messages for this conversation
+- Reads `context/memory/{sender_id}.md` — per-user facts, preferences, and conversation history
+- Sets `ctx.sender_memory` — full file content, or `None` if no memory file exists yet
 
 **`RunAgentNode`**
-- Assembles the full agent prompt: identity + skills + history + current message
-- Calls `AgentRunner.run(ctx)` — the agentic loop (model calls tools, observes results, iterates)
+- Calls `AgentRunner.run(ctx)` — the concrete runner is injected via `dependencies.py`
+- The runner assembles the system prompt (soul.md + sender_memory), runs the agentic loop, and returns a text reply
 - The loop runs until the model produces a final text response or hits `max_turns`
-- Sets `ctx.agent_result` — the final text reply
+- Sets `ctx.agent_result`
+
+**`SaveMessageNode`**
+- Appends the user message and agent reply to `context/memory/{sender_id}.md`
+- Creates the file if it doesn't exist yet
 
 **`SendReplyNode`**
 - Reads `ctx.agent_result` and `ctx.event.sender_id`
 - POSTs reply to WhatsApp API via the channel client
 - Sets `ctx.delivered = True`
-- On delivery failure: marks node as failed, job retried — agent does not re-run, only delivery retries (future: track delivery status separately)
+- On delivery failure: job retried — agent does not re-run, only delivery retries
 
 ### Context at completion
 
@@ -130,9 +122,7 @@ Context(
 Context(
     job=Job(...),
     event=Event(sender_id="...", message_text="...", channel="whatsapp"),
-    identity="You are Bacteria...",
-    skills=["skill: daily-report\n...", "skill: research\n..."],
-    history=[Message(...), Message(...)],
+    sender_memory="name: Guillermo\n...",
     agent_result="Here is what I found...",
     delivered=True,
 )

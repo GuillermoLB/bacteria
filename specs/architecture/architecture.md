@@ -1,6 +1,6 @@
 # Architecture: Bacteria
 
-**Last Updated**: 2026-04-12
+**Last Updated**: 2026-04-17
 **Maintained By**: GuillermoLB
 
 > This is a living document. It describes the *current* state of the system architecture.
@@ -23,8 +23,7 @@ bacteria/
 │   ├── queue/          # Job queue: enqueue, claim (SELECT FOR UPDATE SKIP LOCKED), complete, fail
 │   ├── workflows/      # Assembled DAG workflows per use case (webhook, agent, scheduled)
 │   ├── nodes/          # Atomic Node units: VerifySignature, ParsePayload, DispatchToAgent, etc.
-│   ├── agents/         # BaseAgentRunner protocol + provider adapters (Claude SDK, Pydantic AI, etc.)
-│   ├── llms/           # BaseLLM abstraction + provider adapters
+│   ├── agents/         # AgentRunner protocol + provider adapters (ClaudeAgentRunner, etc.)
 │   ├── tools/          # Tool definitions exposed to agents
 │   ├── skills/         # Markdown skill files loaded into agent context
 │   ├── memory/         # Short-term (conversation) and long-term (DB/file) memory
@@ -50,7 +49,7 @@ bacteria/
 
 **`nodes/`** — Atomic `async def run(ctx) -> ctx` units. Independent, testable, reusable across workflows.
 
-**`agents/`** — `BaseAgentRunner` protocol + adapters for Claude SDK, Pydantic AI, raw LLM API, LangGraph. Swappable without changing workflows.
+**`agents/`** — `AgentRunner` protocol + concrete adapters per provider (`ClaudeAgentRunner`, etc.). Provider choice injected via `dependencies.py` — never referenced directly from workflows or nodes.
 
 **`entities/`** — Pydantic models for Job, Event, Schedule. No business logic here.
 
@@ -59,7 +58,8 @@ bacteria/
 - `entities/` and `nodes/` never import from `api/` or `worker/` — inner layers don't depend on outer layers
 - `api/` never executes workflow logic — it only persists and enqueues
 - `scheduler/` never executes jobs — it only inserts them
-- All swappable components (`agents/`, `llms/`, queue) implement a Protocol or ABC — concrete implementations are never referenced directly from workflows
+- All swappable components (`queue`) implement a Protocol or ABC — concrete implementations are never referenced directly from workflows
+- `agents/` concrete runners are never imported outside `dependencies.py`
 - No circular imports across any module
 
 ## Layer Boundaries
