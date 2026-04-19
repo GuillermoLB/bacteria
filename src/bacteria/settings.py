@@ -26,12 +26,21 @@ class WorkerSettings(BaseSettings):
     stuck_threshold: int = 600  # seconds before a CLAIMED job is considered stuck
 
 
+class AgentSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="AGENT__", env_file=".env", extra="ignore")
+
+    model: str = "claude-sonnet-4-6"
+    max_turns: int = 20
+    max_budget_usd: float = 1.0
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     log_level: str = "INFO"
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
+    agent: AgentSettings = Field(default_factory=AgentSettings)
 
 
 @lru_cache(maxsize=1)

@@ -1,12 +1,18 @@
 """
 Composition root for bacteria.
 
-This module wires together all concrete implementations and injects them into
-the components that depend on abstractions (Protocols/ABCs). Nothing should
-import concrete implementations directly — they get them from here.
-
-Populated incrementally as features are built:
-  - queue/worker spec  → PostgresJobQueue, Worker, WorkflowRegistry
-  - agent spec         → AgentRunner implementations
-  - api spec           → FastAPI app and routers
+Wires together all concrete implementations and injects them into
+components that depend on abstractions (Protocols/ABCs).
 """
+
+from bacteria.agents.claude import ClaudeAgentRunner
+from bacteria.settings import get_settings
+
+
+def get_agent_runner() -> ClaudeAgentRunner:
+    settings = get_settings()
+    return ClaudeAgentRunner(
+        model=settings.agent.model,
+        max_turns=settings.agent.max_turns,
+        max_cost=settings.agent.max_budget_usd,
+    )
