@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
 
+from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from bacteria.entities.job import Job
+from bacteria.observability.metrics import jobs_enqueued
 
 
 def _row_to_job(row) -> Job:
@@ -54,7 +55,12 @@ class PostgresJobQueue:
                 },
             )).one()
             await conn.commit()
-        return _row_to_job(row)
+
+        job = _row_to_job(row)
+        event_type = payload.get("event_type", "unknown")
+        logger.info("Job enqueued", job_id=str(job.id), queue=queue, event_type=event_type)
+        jobs_enqueued.labels(queue=queue, event_type=event_type).inc()
+        return job
 
     async def claim_next(self) -> Job | None:
         async with self._engine.connect() as conn:
@@ -72,9 +78,15 @@ class PostgresJobQueue:
                 RETURNING *
             """))).one_or_none()
             await conn.commit()
-        return _row_to_job(row) if row else None
 
-    async def complete(self, job: Job, result: dict | None = None) -> None: # TODO: this is coupled to agents, ideally the job result should be more flexible and not just a specific field
+        if row is None:
+            return None
+
+        job = _row_to_job(row)
+        logger.debug("Job claimed", job_id=str(job.id), attempts=job.attempts)
+        return job
+
+    async def complete(self, job: Job, result: dict | None = None) -> None:
         async with self._engine.connect() as conn:
             await conn.execute(
                 text("""
@@ -85,6 +97,7 @@ class PostgresJobQueue:
                 {"id": job.id, "result": _serialize(result or {})},
             )
             await conn.commit()
+        logger.debug("Job completed", job_id=str(job.id))
 
     async def fail(self, job: Job, error: str) -> None:
         async with self._engine.connect() as conn:
@@ -97,6 +110,7 @@ class PostgresJobQueue:
                     """),
                     {"id": job.id, "error": error},
                 )
+                logger.error("Job permanently failed", job_id=str(job.id), error=error)
             else:
                 backoff = min(30 * (2 ** job.attempts), 1800)
                 await conn.execute(
@@ -108,6 +122,12 @@ class PostgresJobQueue:
                         WHERE id = :id
                     """),
                     {"id": job.id, "error": error, "backoff": backoff},
+                )
+                logger.warning(
+                    "Job failed, will retry",
+                    job_id=str(job.id),
+                    attempts=job.attempts,
+                    backoff_seconds=backoff,
                 )
             await conn.commit()
 
@@ -123,7 +143,11 @@ class PostgresJobQueue:
                 {"stuck_after": int(stuck_after.total_seconds())},
             )
             await conn.commit()
-        return result.rowcount
+
+        count = result.rowcount
+        if count:
+            logger.info("Released stuck jobs", count=count)
+        return count
 
 
 def _serialize(data: dict) -> str:

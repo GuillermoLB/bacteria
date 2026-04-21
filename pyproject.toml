@@ -16,6 +16,15 @@ dependencies = [
     "psycopg[binary,pool]>=3.2.0",
     "claude-agent-sdk>=0.1.61",
     "greenlet>=3.4.0",
+    "loguru>=0.7.0",
+    "prometheus-client>=0.21.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
+    "opentelemetry-instrumentation-httpx>=0.50b0",
+    "opentelemetry-exporter-otlp>=1.29.0",
+    "sentry-sdk[fastapi]>=2.0.0",
+    "langfuse>=2.33.0",
 ]
 
 [dependency-groups]

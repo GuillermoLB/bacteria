@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter
+from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -44,6 +45,7 @@ async def enqueue_job(body: EnqueueRequest):
         priority=body.priority,
         max_attempts=body.max_attempts,
     )
+    logger.info("Job enqueued via API", job_id=str(job.id), event_type=body.event_type, queue=body.queue)
     return {"id": str(job.id), "status": job.status}
 
 

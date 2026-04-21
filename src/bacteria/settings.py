@@ -40,14 +40,32 @@ class WhatsAppSettings(BaseSettings):
     webhook_secret: str = "dev-secret"
 
 
+class ObservabilitySettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="OBSERVABILITY__", env_file=".env", extra="ignore")
+
+    log_format: str = "text"       # "text" | "json"
+    log_level: str = "INFO"
+
+    sentry_dsn: str | None = None
+    sentry_environment: str = "production"
+
+    otel_endpoint: str | None = None
+
+    langfuse_secret_key: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    metrics_queue_poll_interval: int = 30  # seconds between queue depth polls
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    log_level: str = "INFO"
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
     whatsapp: WhatsAppSettings = Field(default_factory=WhatsAppSettings)
+    observability: ObservabilitySettings = Field(default_factory=ObservabilitySettings)
 
 
 @lru_cache(maxsize=1)
