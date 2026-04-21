@@ -1,8 +1,8 @@
 # Feature: Agent
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-20
 
 ## Purpose
 
@@ -215,16 +215,16 @@ class ClaudeAgentRunner:
 
 ## Acceptance Criteria
 
-- [ ] `AgentRunner` protocol defined in `agents/__init__.py`
-- [ ] `ClaudeAgentRunner` implemented in `agents/claude.py` using `claude-agent-sdk`
-- [ ] `RunAgentNode` is generic — receives runner via constructor, calls `runner.run(ctx)`
-- [ ] `soul.md` + sender memory assembled into system prompt inside `ClaudeAgentRunner`
-- [ ] Skills loaded automatically by SDK from `.claude/skills/`
-- [ ] Each skill file has `name` and `description` frontmatter
-- [ ] `max_turns` and `max_cost` set on `ClaudeAgentRunner`
-- [ ] `RunAgentNode` sets `ctx.agent_result` on success
-- [ ] On error: job marked FAILED and retried by the worker
-- [ ] Workflows reference `AgentRunner` protocol only — never a concrete runner class
+- [x] `AgentRunner` protocol defined in `agents/__init__.py`
+- [x] `ClaudeAgentRunner` implemented in `agents/claude.py` using `claude-agent-sdk`
+- [x] `RunAgentNode` is generic — receives runner via constructor, calls `runner.run(ctx)`
+- [x] `soul.md` + sender memory assembled into system prompt inside `ClaudeAgentRunner`
+- [x] Skills loaded automatically by SDK from `.claude/skills/`
+- [x] Each skill file has `name` and `description` frontmatter
+- [x] `max_turns` and `max_cost` set on `ClaudeAgentRunner`
+- [x] `RunAgentNode` sets `ctx.agent_result` on success
+- [x] On error: job marked FAILED and retried by the worker
+- [x] Workflows reference `AgentRunner` protocol only — never a concrete runner class
 
 ---
 
@@ -237,4 +237,4 @@ class ClaudeAgentRunner:
 
 ---
 
-**Status History**: Draft (2026-04-15) → updated for Claude Agent SDK (2026-04-17) → restored AgentRunner protocol + adapters pattern (2026-04-17)
+**Status History**: Draft (2026-04-15) → updated for Claude Agent SDK (2026-04-17) → restored AgentRunner protocol + adapters pattern (2026-04-17) → Implemented (2026-04-20)

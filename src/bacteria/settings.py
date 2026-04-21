@@ -15,7 +15,7 @@ class PostgresSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        return f"postgresql+psycopg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"postgresql+psycopg_async://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
 
 
 class WorkerSettings(BaseSettings):
@@ -31,7 +31,13 @@ class AgentSettings(BaseSettings):
 
     model: str = "claude-sonnet-4-6"
     max_turns: int = 20
-    max_budget_usd: float = 1.0
+    max_cost: float = 1.0
+
+
+class WhatsAppSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="WHATSAPP__", env_file=".env", extra="ignore")
+
+    webhook_secret: str = "dev-secret"
 
 
 class Settings(BaseSettings):
@@ -41,6 +47,7 @@ class Settings(BaseSettings):
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
+    whatsapp: WhatsAppSettings = Field(default_factory=WhatsAppSettings)
 
 
 @lru_cache(maxsize=1)

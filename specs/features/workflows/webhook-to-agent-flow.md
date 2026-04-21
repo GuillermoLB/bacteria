@@ -1,8 +1,8 @@
 # Feature: Webhook-to-Agent Flow
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-20
 
 ## Purpose
 
@@ -77,7 +77,6 @@ Context(
     job=Job(...),
     event=Event(sender_id="...", message_text="...", channel="whatsapp"),
     intent="agent",
-    emitted_job_id=UUID("..."),   # ID of the agent job just enqueued
 )
 ```
 
@@ -153,12 +152,12 @@ Emitting a new job at the boundary is not overhead — it is the boundary. It ma
 
 ```python
 registry = {
-    ("whatsapp", "webhook"):       whatsapp_webhook_workflow,
-    ("whatsapp", "agent_request"): agent_request_workflow,
+    "whatsapp.webhook":       whatsapp_webhook_workflow,
+    "whatsapp.agent_request": agent_request_workflow,
     # future:
-    # ("whatsapp", "command"):     command_workflow,
-    # ("whatsapp", "media"):       media_workflow,
-    # ("slack",    "webhook"):     slack_webhook_workflow,
+    # "whatsapp.command":     command_workflow,
+    # "whatsapp.media":       media_workflow,
+    # "slack.webhook":        slack_webhook_workflow,
 }
 ```
 
@@ -227,4 +226,4 @@ And the job can be manually re-enqueued for reprocessing
 
 ---
 
-**Status History**: Draft (2026-04-14)
+**Status History**: Draft (2026-04-14) → Implemented (2026-04-20)

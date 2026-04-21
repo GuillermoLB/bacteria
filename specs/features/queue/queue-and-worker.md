@@ -1,8 +1,8 @@
-does # Feature: Queue and Worker
+# Feature: Queue and Worker
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-20
 
 ## Purpose
 
@@ -171,7 +171,7 @@ class Worker:
     async def _handle(self, job: Job) -> None:
         try:
             workflow = self.registry.get(job.payload["event_type"])
-            ctx = Context(job=job, raw_payload=job.payload)
+            ctx = Context(job=job)
             await workflow.run(ctx)
             await self.queue.complete(job)
         except Exception as e:
@@ -313,4 +313,4 @@ And the job is marked FAILED with a clear error message
 
 ---
 
-**Status History**: Draft (2026-04-14)
+**Status History**: Draft (2026-04-14) → Implemented (2026-04-20)

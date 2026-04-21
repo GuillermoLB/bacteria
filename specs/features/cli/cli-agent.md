@@ -1,8 +1,8 @@
 # Feature: CLI Agent
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-20
 **Priority**: High
 
 ## Purpose
@@ -162,4 +162,4 @@ Then it calls save_to_memory and the fact appears in context/memory/cli.md
 
 ---
 
-**Status History**: Draft (2026-04-17)
+**Status History**: Draft (2026-04-17) → Implemented (2026-04-20)

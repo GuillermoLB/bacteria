@@ -1,8 +1,8 @@
 # Feature: Workflow Engine
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-20
 
 ## Purpose
 
@@ -43,9 +43,6 @@ The shared state that flows through a workflow. A Pydantic model — immutable, 
 ```python
 class Context(BaseModel):
     model_config = ConfigDict(frozen=True)
-
-    # Core — always present
-    raw_payload: dict = {}
 
     # Set by ParsePayloadNode
     event: Event | None = None
@@ -95,18 +92,18 @@ whatsapp_workflow = Workflow(nodes=[
 
 ## Routing — how jobs reach the right workflow
 
-The worker claims a job and looks up the right workflow in a registry keyed by `(source, event_type)`:
+The worker claims a job and looks up the right workflow in a registry keyed by a flat `event_type` string using `{source}.{event}` convention:
 
 ```python
 registry = {
-    ("whatsapp", "message"):  whatsapp_workflow,
-    ("slack",    "message"):  slack_workflow,
-    ("github",   "push"):     github_push_workflow,
-    ("schedule", "report"):   daily_report_workflow,
+    "whatsapp.message":  whatsapp_workflow,
+    "slack.message":     slack_workflow,
+    "github.push":       github_push_workflow,
+    "schedule.report":   daily_report_workflow,
 }
 ```
 
-Dispatch is a dict lookup — no guard functions, no `if/elif` chains. If no workflow is registered for a `(source, event_type)` pair, the job is marked FAILED with a clear error.
+Dispatch is a dict lookup — no guard functions, no `if/elif` chains. If no workflow is registered for an `event_type`, the job is marked FAILED with a clear error.
 
 ## Branching
 
@@ -194,7 +191,7 @@ Use this when two nodes are genuinely independent and latency matters (e.g. load
 | Workflow instances (wired) | `workflows/<domain>.py` |
 | Registry | `worker/registry.py` |
 
-Workflow files in `workflows/` are not class definitions — they are module-level instances, wired with their concrete nodes and dependencies. The registry maps `(source, event_type)` to these instances.
+Workflow files in `workflows/` are not class definitions — they are module-level instances, wired with their concrete nodes and dependencies. The registry maps `event_type` to these instances.
 
 ## What bacteria does NOT do
 
@@ -215,16 +212,14 @@ Branching, parallelism, and the `WorkflowRegistry` are deferred to the queue/wor
 
 ## Acceptance Criteria
 
-- [ ] `Node` protocol defined in `nodes/__init__.py`
-- [ ] `Context` Pydantic model defined in `entities/context.py`
-- [ ] `Workflow` generic class defined in `workflows/__init__.py`
-- [ ] `Workflow.run()` executes nodes sequentially, passing context through
-- [ ] No node imports from `api/` or `worker/` (inner layer boundary enforced)
-
-Deferred (queue/worker phase):
-- [ ] `WorkflowRegistry` maps `event_type → Workflow`
-- [ ] Branch node pattern (`RouteByIntentNode`)
-- [ ] `ParallelNode`
+- [x] `Node` protocol defined in `nodes/__init__.py`
+- [x] `Context` Pydantic model defined in `entities/context.py`
+- [x] `Workflow` generic class defined in `workflows/__init__.py`
+- [x] `Workflow.run()` executes nodes sequentially, passing context through
+- [x] No node imports from `api/` or `worker/` (inner layer boundary enforced)
+- [x] `WorkflowRegistry` maps `event_type → Workflow`
+- [x] Branch node pattern (`RouteByIntentNode`) in `nodes/route_by_intent.py`
+- [x] `ParallelNode` in `nodes/parallel.py`
 
 ## Dependencies
 
@@ -232,4 +227,4 @@ Deferred (queue/worker phase):
 
 ---
 
-**Status History**: Draft (2026-04-13)
+**Status History**: Draft (2026-04-13) → Implemented (2026-04-20)

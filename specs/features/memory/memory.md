@@ -1,8 +1,8 @@
 # Feature: Memory
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-16
+**Last Updated**: 2026-04-20
 **Priority**: High
 
 ## Purpose
@@ -46,22 +46,24 @@ assistant: sure, here's what I think...
 ## Acceptance Criteria
 
 ```
-Given a returning user
-When LoadContextNode runs
-Then ctx.sender_memory contains the full content of their memory file
+[x] Given a returning user
+    When LoadContextNode runs
+    Then ctx.sender_memory contains the full content of their memory file
 ```
 
 ```
-Given the agent produces a reply
-When SaveMessageNode runs
-Then the user message and agent reply are appended to context/memory/{sender_id}.md
-And the file is created if it doesn't exist yet
+[x] Given the agent produces a reply
+    When SaveMessageNode runs
+    Then the user message and agent reply are appended to context/memory/{sender_id}.md
+    And the file is created with frontmatter if it doesn't exist yet
+    And MEMORY.md index is updated for new users
 ```
 
 ```
-Given the agent calls save_to_memory with a fact
-Then the fact is appended to the frontmatter section of {sender_id}.md
-And MEMORY.md is updated if the file is new
+[x] Given the agent calls save_to_memory with a fact
+    Then the fact is appended to the frontmatter section of {sender_id}.md
+    — Implemented via .claude/skills/memory-manager/SKILL.md
+    — Agent uses built-in Write tool guided by skill instructions
 ```
 
 ## Dependencies
@@ -72,4 +74,4 @@ And MEMORY.md is updated if the file is new
 
 ---
 
-**Status History**: Draft (2026-04-16)
+**Status History**: Draft (2026-04-16) → In Progress (2026-04-20) → Implemented (2026-04-20)
