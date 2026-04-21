@@ -5,11 +5,12 @@ from bacteria.entities.job import Job
 
 
 class Context(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
+    model_config = ConfigDict(frozen=True) # TODO: not sure should be more mutable
+    
+    # TODO: don't want this model to be a god object so having a more flexible context model
     # Set by ParsePayloadNode (webhook flows)
     event: Event | None = None
-
+    
     # Set by LoadContextNode
     sender_memory: str | None = None
 

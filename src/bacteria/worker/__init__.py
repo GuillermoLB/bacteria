@@ -43,7 +43,7 @@ class Worker:
             workflow = self.registry.get(job.payload["event_type"])
             ctx = Context(job=job)
             ctx = await workflow.run(ctx)
-            result = {"agent_result": ctx.agent_result} if ctx.agent_result else None
+            result = {"agent_result": ctx.agent_result} if ctx.agent_result else None # TODO: coupled to agents, I think all the context should be stored in the job result and not just a specific field
             await self.queue.complete(job, result=result)
         except PermanentFailure as e:
             logger.error("Job %s permanently failed: %s", job.id, e)

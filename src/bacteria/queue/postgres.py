@@ -74,7 +74,7 @@ class PostgresJobQueue:
             await conn.commit()
         return _row_to_job(row) if row else None
 
-    async def complete(self, job: Job, result: dict | None = None) -> None:
+    async def complete(self, job: Job, result: dict | None = None) -> None: # TODO: this is coupled to agents, ideally the job result should be more flexible and not just a specific field
         async with self._engine.connect() as conn:
             await conn.execute(
                 text("""
