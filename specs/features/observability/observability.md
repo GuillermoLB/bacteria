@@ -83,6 +83,22 @@ def clear() -> None:
 
 Context is bound in `worker/_handle()` immediately after claiming a job, and cleared after completion or failure.
 
+### Logging internals
+
+Python has two logging systems that must be unified:
+
+- **loguru** — used by all bacteria code (`from loguru import logger`). Simpler API, no per-module `getLogger()` boilerplate, supports keyword args, and prints local variable values on exceptions (`diagnose=True`).
+- **stdlib `logging`** — used internally by SQLAlchemy, uvicorn, and every third-party library. They don't know about loguru.
+
+`setup_logging()` (called once at startup) bridges them:
+
+1. Removes loguru's default stderr handler and adds a single stdout sink in either JSON or text format.
+2. Registers `_context_patcher` via `logger.configure(patcher=...)` — loguru calls this before writing every record, injecting `trace_id`, `job_id`, etc. from the `ContextVar`s automatically. No need to pass context to individual log calls.
+3. Installs `_InterceptHandler` as the root stdlib handler. Any `logging.info(...)` call from a third-party library lands here and is re-emitted through loguru, preserving the original file and line number by walking up the call stack past logging internals.
+4. Clears handlers on all known stdlib loggers so their output propagates to the root handler instead of being handled twice.
+
+The result: all log output — from bacteria code and from third-party libraries — goes through one unified loguru pipeline with context fields injected on every line.
+
 ### Log coverage requirements
 
 Every layer must log at these points:

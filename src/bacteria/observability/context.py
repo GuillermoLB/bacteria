@@ -11,6 +11,7 @@ _sender_id: ContextVar[str | None] = ContextVar("sender_id", default=None)
 
 
 def bind_job(job: Job) -> None:
+    # trace_id = job.id so every log line during a job shares the same trace
     _job_id.set(str(job.id))
     _trace_id.set(str(job.id))
     _queue.set(job.queue)
@@ -22,6 +23,7 @@ def bind_event(event: Event) -> None:
 
 
 def bind_request(request_id: str) -> None:
+    # trace_id comes from the x-request-id HTTP header, or a generated UUID if absent
     _trace_id.set(request_id)
 
 
