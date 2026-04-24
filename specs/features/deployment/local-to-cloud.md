@@ -1,6 +1,6 @@
 # Feature: Local-to-Cloud Deployment
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
 **Last Updated**: 2026-04-24
 
