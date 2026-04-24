@@ -26,3 +26,4 @@ Read files in this directory before implementing anything that involves the tool
 |---|---|
 | `AI_operating_system_video_transcriptions.md` | Source video transcriptions — context for original architecture decisions |
 | `python-ai-project-structure.md` | Python project structure conventions for AI systems |
+| `uv-docker-github.md` | uv best practices for Docker and GitHub Actions CI/CD |
