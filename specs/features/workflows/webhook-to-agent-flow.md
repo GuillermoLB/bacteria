@@ -2,7 +2,7 @@
 
 **Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-24
 
 ## Purpose
 
@@ -22,7 +22,6 @@ POST /webhooks/whatsapp
       WhatsAppWebhookWorkflow
         VerifySignatureNode
         ParsePayloadNode
-        ClassifyIntentNode
         EmitAgentJobNode          → INSERT INTO jobs (queue: "agents", ...)
       → COMPLETED
 
@@ -56,19 +55,10 @@ Job 1 completes as soon as it emits Job 2. Job 2 runs independently — its own 
 - Anti-corruption layer: nothing downstream knows about WhatsApp's payload shape
 - Sets `ctx.event` with normalized fields: `sender_id`, `message_text`, `media_url`, `timestamp`
 
-**`ClassifyIntentNode`**
-- Reads `ctx.event.message_text`
-- Determines intent: `"agent"` | `"command"` | `"media"`
-- Simple rules first (starts with `/` → `"command"`, has `media_url` → `"media"`, otherwise → `"agent"`)
-- Sets `ctx.intent`
-
 **`EmitAgentJobNode`**
-- Reads `ctx.intent`
-- Enqueues a new job to the appropriate queue:
-  - `"agent"` → `queue="agents"`, payload carries `sender_id`, `message_text`, `channel="whatsapp"`
-  - `"command"` → `queue="commands"`, payload carries parsed command
-  - `"media"` → `queue="media"`, payload carries `media_url`
-- This node only handles the `"agent"` path for this spec; command and media are future specs
+- Enqueues a new job: `queue="agents"`, payload carries `sender_id`, `message_text`, `channel="whatsapp"`
+- All messages — text, commands, media — are handed off to the agent queue
+- Intent disambiguation (slash commands, media handling) is the agent's responsibility via skills, not a hard-coded node
 
 ### Context at completion
 
@@ -76,7 +66,6 @@ Job 1 completes as soon as it emits Job 2. Job 2 runs independently — its own 
 Context(
     job=Job(...),
     event=Event(sender_id="...", message_text="...", channel="whatsapp"),
-    intent="agent",
 )
 ```
 
@@ -155,8 +144,6 @@ registry = {
     "whatsapp.webhook":       whatsapp_webhook_workflow,
     "whatsapp.agent_request": agent_request_workflow,
     # future:
-    # "whatsapp.command":     command_workflow,
-    # "whatsapp.media":       media_workflow,
     # "slack.webhook":        slack_webhook_workflow,
 }
 ```

@@ -14,9 +14,6 @@ class Context(BaseModel):
     # Set by LoadContextNode
     sender_memory: str | None = None
 
-    # Set by ParsePayloadNode — used by RouteByIntentNode
-    intent: str | None = None
-
     # Set by RunAgentNode
     agent_result: str | None = None
 

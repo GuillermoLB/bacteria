@@ -218,7 +218,7 @@ Branching, parallelism, and the `WorkflowRegistry` are deferred to the queue/wor
 - [x] `Workflow.run()` executes nodes sequentially, passing context through
 - [x] No node imports from `api/` or `worker/` (inner layer boundary enforced)
 - [x] `WorkflowRegistry` maps `event_type → Workflow`
-- [x] Branch node pattern (`RouteByIntentNode`) in `nodes/route_by_intent.py`
+- [x] Branch node pattern (`RouteByIntentNode`) available in `nodes/route_by_intent.py` (not used in current workflows — intent disambiguation is handled by the agent via skills)
 - [x] `ParallelNode` in `nodes/parallel.py`
 
 ## Dependencies
