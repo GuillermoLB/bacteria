@@ -1,8 +1,8 @@
 # Feature: OpenTelemetry Tracing
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-27
+**Last Updated**: 2026-04-28
 
 ## Purpose
 

@@ -1,5 +1,6 @@
 import asyncio
 
+from bacteria.observability import setup_observability
 from bacteria.dependencies import get_agent_runner
 from bacteria.entities.context import Context
 from bacteria.entities.event import Event
@@ -40,6 +41,7 @@ async def _chat_loop() -> None:
 
 
 def chat() -> None:
+    setup_observability()
     asyncio.run(_chat_loop())
 
 

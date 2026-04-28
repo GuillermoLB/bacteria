@@ -47,6 +47,7 @@ class ObservabilitySettings(BaseSettings):
     log_level: str = "INFO"
 
     otel_endpoint: str | None = None
+    otel_console: bool = True
 
     metrics_queue_poll_interval: int = 30  # seconds between queue depth polls
 
