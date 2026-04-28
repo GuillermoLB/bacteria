@@ -7,8 +7,6 @@ from loguru import logger
 from bacteria.entities.context import Context
 from bacteria.entities.job import Job
 from bacteria.observability import context as obs_ctx
-from bacteria.observability.metrics import job_duration, jobs_completed, jobs_failed, worker_active
-from bacteria.observability.sentry import capture_exception
 from bacteria.queue import JobQueue
 from bacteria.settings import get_settings
 from bacteria.worker.exceptions import PermanentFailure
@@ -54,7 +52,6 @@ class Worker:
 
         event_type = job.payload.get("event_type", "unknown")
         started_at = time.monotonic()
-        worker_active.inc()
 
         try:
             workflow = self.registry.get(job.payload["event_type"])
@@ -62,23 +59,13 @@ class Worker:
             ctx = await workflow.run(ctx)
             result = {"agent_result": ctx.agent_result} if ctx.agent_result else None
             await self.queue.complete(job, result=result)
-            duration = time.monotonic() - started_at
-            jobs_completed.labels(queue=job.queue, event_type=event_type).inc()
-            job_duration.labels(queue=job.queue, event_type=event_type).observe(duration)
+            logger.info("Job completed", job_id=str(job.id), duration_ms=int((time.monotonic() - started_at) * 1000))
         except PermanentFailure as e:
-            duration = time.monotonic() - started_at
-            logger.error("Job permanently failed: {}", str(e))
-            capture_exception(e, job_id=str(job.id), event_type=event_type)
+            logger.error("Job permanently failed", job_id=str(job.id), event_type=event_type, error=str(e))
             job = job.model_copy(update={"attempts": job.max_attempts})
             await self.queue.fail(job, error=str(e))
-            jobs_failed.labels(queue=job.queue, event_type=event_type, permanent="true").inc()
-            job_duration.labels(queue=job.queue, event_type=event_type).observe(time.monotonic() - started_at)
         except Exception as e:
-            logger.exception("Job failed: {}", str(e))
+            logger.exception("Job failed", job_id=str(job.id), error=str(e))
             await self.queue.fail(job, error=str(e))
-            permanent = str(job.attempts >= job.max_attempts).lower()
-            jobs_failed.labels(queue=job.queue, event_type=event_type, permanent=permanent).inc()
-            job_duration.labels(queue=job.queue, event_type=event_type).observe(time.monotonic() - started_at)
         finally:
-            worker_active.dec()
             obs_ctx.clear()

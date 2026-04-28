@@ -55,10 +55,7 @@ class ClaudeAgentRunner:
 
         result = ""
         result_session_id: str | None = ctx.session_id
-        async for message in query(
-            prompt=ctx.event.message_text,
-            options=options,
-        ):
+        async for message in query(prompt=ctx.event.message_text, options=options):
             if isinstance(message, AssistantMessage):
                 text = _extract_text(message)
                 if text:

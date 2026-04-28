@@ -46,14 +46,7 @@ class ObservabilitySettings(BaseSettings):
     log_format: str = "text"       # "text" | "json"
     log_level: str = "INFO"
 
-    sentry_dsn: str | None = None
-    sentry_environment: str = "production"
-
     otel_endpoint: str | None = None
-
-    langfuse_secret_key: str | None = None
-    langfuse_public_key: str | None = None
-    langfuse_host: str = "https://cloud.langfuse.com"
 
     metrics_queue_poll_interval: int = 30  # seconds between queue depth polls
 

@@ -5,7 +5,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from bacteria.entities.job import Job
-from bacteria.observability.metrics import jobs_enqueued
 
 
 def _row_to_job(row) -> Job:
@@ -59,7 +58,6 @@ class PostgresJobQueue:
         job = _row_to_job(row)
         event_type = payload.get("event_type", "unknown")
         logger.info("Job enqueued", job_id=str(job.id), queue=queue, event_type=event_type)
-        jobs_enqueued.labels(queue=queue, event_type=event_type).inc()
         return job
 
     async def claim_next(self) -> Job | None:

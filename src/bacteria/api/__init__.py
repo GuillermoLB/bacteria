@@ -1,6 +1,5 @@
 import uvicorn
 from fastapi import FastAPI
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from bacteria.api.routes.jobs import router as jobs_router
 from bacteria.observability import setup_observability
@@ -13,8 +12,6 @@ def create_app() -> FastAPI:
     setup_observability(app=app)
 
     app.add_middleware(RequestIdMiddleware)
-
-    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
     app.include_router(jobs_router)
     _add_health_routes(app)
