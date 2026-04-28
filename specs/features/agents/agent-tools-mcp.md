@@ -1,6 +1,6 @@
 # Feature: Agent Tools (Middle Path)
 
-**Status**: Draft
+**Status**: Implemented
 **Owner**: GuillermoLB
 **Last Updated**: 2026-04-27
 
@@ -186,15 +186,14 @@ Tools in `allowed_tools` are auto-approved — no permission prompt needed.
 
 ## Tool catalogue
 
-### Phase 1 — Memory write
+### Phase 1 — Memory tools
 
-With SDK sessions handling conversation history, the only memory tool needed is writing durable facts. Reading is already covered: `LoadContextNode` pre-loads the memory file into the system prompt.
+SDK sessions handle conversation history. The memory file handles durable facts. The agent needs symmetric read/write access to that facts layer — `LoadContextNode` provides a snapshot at job start, but that snapshot is stale after a `write_memory` call.
 
 | Tool | Description | Scope |
 |---|---|---|
+| `read_memory` | Read the current memory file for a sender | `context/memory/{sender_id}.md`, read-only |
 | `write_memory` | Append a durable fact to the sender's memory file | `context/memory/{sender_id}.md`, append-only |
-
-`read_memory` is not needed in Phase 1 — the memory file is already in the system prompt. Add it later if the agent needs to re-read mid-loop after a write.
 
 ### Phase 2 — Context Hub tools
 
@@ -247,7 +246,7 @@ runner = ClaudeAgentRunner(
     max_turns=20,
     max_cost=1.0,
     tool_server=bacteria_tool_server,
-    allowed_tools=["mcp__bacteria__write_memory"],
+    allowed_tools=["mcp__bacteria__read_memory", "mcp__bacteria__write_memory"],
 )
 ```
 
@@ -272,7 +271,7 @@ No tools yet. Test: send two sequential WhatsApp messages from the same sender, 
 
 Add `tool_server` and `allowed_tools` params. Backward-compatible: both default to empty/None.
 
-### Step 3 — Implement `write_memory` (`tools/memory.py`)
+### Step 3 — Implement `read_memory` and `write_memory` (`tools/memory.py`)
 
 Assemble `bacteria_tool_server` in `tools/__init__.py`. Wire into `dependencies.py`.
 
@@ -281,6 +280,7 @@ Assemble `bacteria_tool_server` in `tools/__init__.py`. Wire into `dependencies.
 Send a message asking the agent to remember a preference. Verify:
 - Agent calls `write_memory` during its loop
 - Fact is appended to `context/memory/{sender_id}.md`
+- Agent calls `read_memory` to confirm the write
 - Next message confirms the agent recalls it (via system prompt injection)
 - `max_turns` and `max_budget_usd` are enforced
 
@@ -375,4 +375,4 @@ And no job is enqueued
 
 ---
 
-**Status History**: Draft (2026-04-24) → revised: MCP replaced with in-process SDK tools (2026-04-27) → revised: SDK session continuity added, tool catalogue narrowed (2026-04-27)
+**Status History**: Draft (2026-04-24) → revised: MCP replaced with in-process SDK tools (2026-04-27) → revised: SDK session continuity added, tool catalogue narrowed (2026-04-27) → Implemented (2026-04-27)

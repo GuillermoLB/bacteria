@@ -12,6 +12,7 @@ from bacteria.channels.whatsapp import WhatsAppClient
 from bacteria.db import get_engine
 from bacteria.queue.postgres import PostgresJobQueue
 from bacteria.settings import get_settings
+from bacteria.tools import bacteria_tool_server
 from bacteria.worker import Worker
 from bacteria.worker.registry import WorkflowRegistry
 from bacteria.workflows.whatsapp import (
@@ -26,6 +27,8 @@ def get_agent_runner() -> ClaudeAgentRunner:
         model=settings.agent.model,
         max_turns=settings.agent.max_turns,
         max_cost=settings.agent.max_cost,
+        tool_server=bacteria_tool_server,
+        allowed_tools=["mcp__bacteria__read_memory", "mcp__bacteria__write_memory"],
     )
 
 

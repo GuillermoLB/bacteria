@@ -7,5 +7,5 @@ class RunAgentNode:
         self.runner = runner
 
     async def run(self, ctx: Context) -> Context:
-        result = await self.runner.run(ctx)
-        return ctx.model_copy(update={"agent_result": result})
+        result, session_id = await self.runner.run(ctx)
+        return ctx.model_copy(update={"agent_result": result, "session_id": session_id})
