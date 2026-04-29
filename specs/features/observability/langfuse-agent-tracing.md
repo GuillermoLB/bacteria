@@ -1,8 +1,8 @@
 # Feature: Langfuse Agent Tracing
 
-**Status**: Draft
+**Status**: Implemented (with known limitation — see below)
 **Owner**: GuillermoLB
-**Last Updated**: 2026-04-27
+**Last Updated**: 2026-04-29
 
 ## Purpose
 
@@ -14,28 +14,37 @@ Give operators full visibility into agent execution: per-turn LLM requests, tool
 
 The `claude-agent-sdk` runs the Claude Code CLI as a **subprocess**. LLM API calls, token counts, and tool call executions all happen inside that subprocess — they are invisible to Python-side decorators. Wrapping `runner.run()` with `@observe` gives you one span with a duration, nothing inside it.
 
-The SDK exposes its internal telemetry via **OTel env vars injected into the subprocess**. When configured, the CLI emits its own spans (LLM requests, tool calls, interaction turns) and automatically attaches them as children of the active OTel span in the parent process via W3C `TRACEPARENT` propagation.
+The SDK exposes its internal telemetry via **OTel env vars injected into the subprocess**. When configured, the CLI emits its own spans (LLM requests, tool calls, interaction turns) to the configured OTLP endpoint.
 
-The correct approach: start an OTel span in `ClaudeAgentRunner.run()`, configure the subprocess env vars to export to Langfuse's OTLP endpoint, and read `ResultMessage` directly for authoritative cost/token data (the OTel cache token breakdown has a known bug — always reports 0 — causing ~35% cost overcounting).
+**Important**: The Claude CLI Bun binary (v2.x) does **not** implement W3C `TRACEPARENT` propagation from environment variables — it ignores both `TRACEPARENT` and `OTEL_RESOURCE_ATTRIBUTES`, always generating its own root trace IDs. CLI spans therefore land in Langfuse as **separate root traces**, not as children of the Python `agent_run` span.
+
+The implemented approach: start an OTel span in `ClaudeAgentRunner.run()`, configure the subprocess env vars to export to Langfuse's OTLP endpoint (base URL, not `/v1/traces` — the CLI appends that path automatically), and read `ResultMessage` directly for authoritative cost/token data (the OTel cache token breakdown has a known bug — always reports 0 — causing ~35% cost overcounting). After the run, stamp the Python span with `claude_session_id` so CLI traces can be correlated via Langfuse's session filter.
 
 ---
 
 ## What Langfuse receives
 
-With this implementation, each agent run produces a trace in Langfuse with the following span hierarchy:
+Each agent run produces **two separate traces** in Langfuse (not nested — see limitation above):
 
+**Trace 1 — Python span** (`agent_run`):
 ```
-[SPAN] agent_run                          ← created by ClaudeAgentRunner
-  ├── [SPAN] claude_code.interaction      ← one turn of the agent loop
-  │     ├── [SPAN] claude_code.llm_request   ← each API call (model, tokens, latency)
-  │     └── [SPAN] claude_code.tool          ← each tool invocation
-  │           └── [SPAN] claude_code.tool.execution
-  ├── [SPAN] claude_code.interaction      ← next turn
-  │     └── ...
-  └── [EVENT] agent_result               ← cost + token totals from ResultMessage
+[SPAN] agent_run
+  └── [EVENT] agent_result   ← total_cost_usd, num_turns, input/output tokens
+Attributes: job_id, sender_id, model, session_id, claude_session_id
 ```
 
-Metadata on the root span: `job_id`, `sender_id`, `model`, `session_id`.
+**Trace 2 — CLI spans** (one per agent run, separate root trace):
+```
+[SPAN] claude_code.interaction      ← one turn of the agent loop
+  ├── [SPAN] claude_code.llm_request   ← each API call (model, tokens, latency)
+  └── [SPAN] claude_code.tool          ← each tool invocation
+        └── [SPAN] claude_code.tool.execution
+[SPAN] claude_code.interaction      ← next turn
+  └── ...
+Attributes: session.id = claude_session_id (matches agent_run.claude_session_id)
+```
+
+**Correlation**: filter CLI traces in Langfuse by `session.id` = the `claude_session_id` attribute from the `agent_run` trace.
 
 ---
 
@@ -43,175 +52,110 @@ Metadata on the root span: `job_id`, `sender_id`, `model`, `session_id`.
 
 Two things work together:
 
-1. **OTel subprocess export** — the CLI subprocess exports its spans to Langfuse's OTLP endpoint. These become children of the active span via `TRACEPARENT`.
-2. **`ResultMessage` event** — after the loop completes, `ResultMessage.total_cost_usd` and `ResultMessage.usage` are recorded directly to the Langfuse span as an event. This is the authoritative cost/token source.
+1. **OTel subprocess export** — the CLI subprocess exports its spans to Langfuse's OTLP base endpoint (`/api/public/otel`, not `/api/public/otel/v1/traces` — the CLI appends `/v1/traces` automatically per OTel spec). Spans land as separate root traces in Langfuse.
+2. **`ResultMessage` event + `claude_session_id`** — after the loop completes, `ResultMessage.total_cost_usd`, `ResultMessage.usage`, and `ResultMessage.session_id` are recorded to the Python span. The `session_id` (as `claude_session_id`) enables manual correlation with CLI traces in Langfuse's session filter.
 
 ---
 
 ## Settings changes
 
-Add `langfuse_otlp_endpoint` to `ObservabilitySettings`. This is the OTLP endpoint Langfuse exposes for receiving spans — distinct from the Langfuse SDK host.
+Add three fields to `ObservabilitySettings`:
 
 ```python
 class ObservabilitySettings(BaseSettings):
     ...
+    langfuse_secret_key: str | None = None
+    langfuse_public_key: str | None = None
     langfuse_otlp_endpoint: str | None = None
     # e.g. "https://cloud.langfuse.com/api/public/otel/v1/traces"
     # or   "http://localhost:3000/api/public/otel/v1/traces" for self-hosted
 ```
 
-`OBSERVABILITY__LANGFUSE_OTLP_ENDPOINT` env var. If unset, subprocess OTel export is disabled — only the outer span is recorded.
+All three must be set for Langfuse to activate. If any is absent, `setup_langfuse()` is not called and tracing continues console-only (or OTLP-only if `OBSERVABILITY__OTEL_ENDPOINT` is set).
 
 ---
 
 ## `observability/langfuse.py` changes
 
-Replace the current decorator-based stub with:
+Replace the stub with two helpers:
 
-1. A `get_otlp_headers()` helper that returns the Base64-encoded `Authorization` header Langfuse requires for OTLP.
-2. A `get_tracer()` helper that returns an OTel tracer for creating the root `agent_run` span.
-3. A `record_result()` helper that appends a `ResultMessage` event to the current span.
+1. `setup_langfuse(secret_key, public_key, otlp_endpoint)` — builds the Base64 auth header and registers Langfuse as a second OTLP exporter on the existing `TracerProvider` via `tracing.add_otlp_exporter()`. Never creates its own provider.
+2. `get_langfuse_subprocess_env()` — returns the subprocess env vars needed to route CLI spans to Langfuse, or `{}` if not configured.
 
 ```python
 import base64
-from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
-_tracer: trace.Tracer | None = None
 _otlp_headers: dict | None = None
+_otlp_endpoint: str | None = None
 
 
-def setup_langfuse(secret_key: str, public_key: str, host: str, otlp_endpoint: str | None = None) -> None:
-    global _tracer, _otlp_headers
+def setup_langfuse(secret_key: str, public_key: str, otlp_endpoint: str) -> None:
+    global _otlp_headers, _otlp_endpoint
+    from bacteria.observability.tracing import add_otlp_exporter
 
-    # OTLP auth header: Base64("public_key:secret_key")
-    if otlp_endpoint:
-        token = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
-        _otlp_headers = {"Authorization": f"Basic {token}"}
+    token = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
+    _otlp_headers = {"Authorization": f"Basic {token}"}
+    _otlp_endpoint = otlp_endpoint
 
-        resource = Resource(attributes={"service.name": "bacteria"})
-        provider = TracerProvider(resource=resource)
-        provider.add_span_processor(
-            BatchSpanProcessor(
-                OTLPSpanExporter(endpoint=otlp_endpoint, headers=_otlp_headers)
-            )
-        )
-        trace.set_tracer_provider(provider)
-        _tracer = trace.get_tracer("bacteria.agent")
+    add_otlp_exporter(endpoint=otlp_endpoint, headers=_otlp_headers)
 
 
-def get_tracer() -> trace.Tracer | None:
-    return _tracer
-
-
-def get_otlp_headers() -> dict:
-    return _otlp_headers or {}
+def get_langfuse_subprocess_env() -> dict[str, str]:
+    if not _otlp_endpoint:
+        return {}
+    headers_str = ",".join(f"{k}={v}" for k, v in (_otlp_headers or {}).items())
+    return {
+        "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+        "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA": "1",
+        "OTEL_TRACES_EXPORTER": "otlp",
+        "OTEL_LOGS_EXPORTER": "otlp",
+        "OTEL_METRICS_EXPORTER": "otlp",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": _otlp_endpoint,
+        "OTEL_EXPORTER_OTLP_HEADERS": headers_str,
+        "OTEL_LOG_TOOL_DETAILS": "1",
+    }
 ```
 
 ---
 
 ## `ClaudeAgentRunner` changes
 
+`agents/claude.py` already creates the `agent_run` span via `tracing.get_tracer()` — no change needed there. The only addition is subprocess env var injection so the CLI routes its spans to Langfuse.
+
+`_build_subprocess_env()` is extended to merge in Langfuse subprocess vars:
+
 ```python
-from opentelemetry import trace as otel_trace
+from bacteria.observability.langfuse import get_langfuse_subprocess_env
 from opentelemetry.propagate import inject as otel_inject
 
-from bacteria.observability.langfuse import get_tracer, get_otlp_headers
-
-class ClaudeAgentRunner:
-    async def run(self, ctx: Context) -> tuple[str, str | None]:
-        tracer = get_tracer()
-
-        with (tracer.start_as_current_span("agent_run") if tracer else nullcontext()) as span:
-            if span and span.is_recording():
-                span.set_attribute("job_id", str(ctx.job.id) if ctx.job else "cli")
-                span.set_attribute("sender_id", ctx.event.sender_id)
-                span.set_attribute("model", self.model)
-                if ctx.session_id:
-                    span.set_attribute("session_id", ctx.session_id)
-
-            # Propagate TRACEPARENT into subprocess so CLI spans attach here
-            carrier = {}
-            otel_inject(carrier)
-            traceparent = carrier.get("traceparent")
-
-            subprocess_env = {}
-            otlp_headers = get_otlp_headers()
-            otlp_endpoint = _get_otlp_endpoint()  # reads from settings
-            if otlp_endpoint:
-                subprocess_env = {
-                    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
-                    "OTEL_TRACES_EXPORTER": "otlp",
-                    "OTEL_LOGS_EXPORTER": "otlp",
-                    "OTEL_METRICS_EXPORTER": "otlp",
-                    "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA": "1",
-                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-                    "OTEL_EXPORTER_OTLP_HEADERS": _format_otlp_headers(otlp_headers),
-                    "OTEL_LOG_TOOL_DETAILS": "1",
-                    **({"TRACEPARENT": traceparent} if traceparent else {}),
-                }
-
-            options = ClaudeAgentOptions(
-                ...
-                env=subprocess_env,
-            )
-
-            result = ""
-            result_session_id = ctx.session_id
-            async for message in query(prompt=ctx.event.message_text, options=options):
-                if isinstance(message, AssistantMessage):
-                    text = _extract_text(message)
-                    if text:
-                        result = text
-                if isinstance(message, ResultMessage):
-                    result_session_id = message.session_id
-                    if span and span.is_recording():
-                        span.add_event("agent_result", attributes={
-                            "total_cost_usd": str(message.total_cost_usd or 0),
-                            "num_turns": message.num_turns,
-                            "input_tokens": message.usage.get("input_tokens", 0) if message.usage else 0,
-                            "output_tokens": message.usage.get("output_tokens", 0) if message.usage else 0,
-                            "stop_reason": message.stop_reason or "",
-                        })
-
-            return result, result_session_id
+def _build_subprocess_env() -> dict[str, str]:
+    env = get_langfuse_subprocess_env()
+    if env:
+        carrier = {}
+        otel_inject(carrier)
+        if traceparent := carrier.get("traceparent"):
+            env["TRACEPARENT"] = traceparent
+    return env
 ```
 
-`nullcontext()` is `contextlib.nullcontext` — used when no tracer is configured, so the code path is identical with or without Langfuse.
-
-`_format_otlp_headers(headers: dict) -> str` formats `{"Authorization": "Basic ..."}` as `"Authorization=Basic ..."` (OTLP env var format).
-
-`_get_otlp_endpoint()` reads `get_settings().observability.langfuse_otlp_endpoint`.
+`TRACEPARENT` injection propagates the active `agent_run` span context into the subprocess so CLI spans are recorded as children in Langfuse.
 
 ---
 
 ## `setup_observability()` changes
 
-Pass `otlp_endpoint` to `setup_langfuse`:
-
 ```python
-if obs.langfuse_secret_key and obs.langfuse_public_key:
+if obs.langfuse_secret_key and obs.langfuse_public_key and obs.langfuse_otlp_endpoint:
+    from bacteria.observability.langfuse import setup_langfuse
     setup_langfuse(
         secret_key=obs.langfuse_secret_key,
         public_key=obs.langfuse_public_key,
-        host=obs.langfuse_host,
         otlp_endpoint=obs.langfuse_otlp_endpoint,
     )
 ```
 
----
-
-## OTel TracerProvider deduplication
-
-`setup_otel()` (in `tracing.py`) and `setup_langfuse()` both call `trace.set_tracer_provider()`. They must not conflict. Two options:
-
-1. **Preferred**: merge — `setup_langfuse()` adds a second `BatchSpanProcessor` to the existing provider if one is already set, rather than creating a new one.
-2. **Simple**: only one OTel endpoint is active at a time. `setup_langfuse()` skips provider setup if `OTEL_EXPORTER_OTLP_ENDPOINT` is already set (letting the app OTel pipeline handle it, with Langfuse as just another exporter).
-
-Option 2 is simpler and correct for Bacteria's single-process setup. Document it explicitly in code.
+`setup_tracing()` is always called first. `setup_langfuse()` then adds Langfuse as a second processor on the same provider — one provider, two exporters.
 
 ---
 
@@ -242,10 +186,9 @@ Option 2 is simpler and correct for Bacteria's single-process setup. Document it
 ## Environment variables
 
 ```
-# Required for Langfuse
+# Required — all three must be set
 OBSERVABILITY__LANGFUSE_SECRET_KEY=sk-lf-...
 OBSERVABILITY__LANGFUSE_PUBLIC_KEY=pk-lf-...
-OBSERVABILITY__LANGFUSE_HOST=https://cloud.langfuse.com        # or self-hosted URL
 OBSERVABILITY__LANGFUSE_OTLP_ENDPOINT=https://cloud.langfuse.com/api/public/otel/v1/traces
 
 # Optional: log prompt/tool content
@@ -255,7 +198,8 @@ OBSERVABILITY__LANGFUSE_OTLP_ENDPOINT=https://cloud.langfuse.com/api/public/otel
 
 For self-hosted Langfuse:
 ```
-OBSERVABILITY__LANGFUSE_HOST=http://langfuse:3000
+OBSERVABILITY__LANGFUSE_SECRET_KEY=sk-lf-...
+OBSERVABILITY__LANGFUSE_PUBLIC_KEY=pk-lf-...
 OBSERVABILITY__LANGFUSE_OTLP_ENDPOINT=http://langfuse:3000/api/public/otel/v1/traces
 ```
 
@@ -265,12 +209,12 @@ OBSERVABILITY__LANGFUSE_OTLP_ENDPOINT=http://langfuse:3000/api/public/otel/v1/tr
 
 | File | Change |
 |---|---|
-| `settings.py` | Add `langfuse_otlp_endpoint: str | None` to `ObservabilitySettings` |
-| `observability/langfuse.py` | Replace stub with OTel provider setup + `get_tracer()` + `get_otlp_headers()` |
-| `observability/__init__.py` | Pass `otlp_endpoint` to `setup_langfuse()` |
-| `agents/claude.py` | Start `agent_run` span, inject `TRACEPARENT`, pass subprocess env, record `ResultMessage` event |
+| `settings.py` | Add `langfuse_secret_key`, `langfuse_public_key`, `langfuse_otlp_endpoint` to `ObservabilitySettings` |
+| `observability/langfuse.py` | Replace stub with `setup_langfuse()` (adds exporter to existing provider) + `get_langfuse_subprocess_env()` |
+| `observability/__init__.py` | Call `setup_langfuse()` after `setup_tracing()` when keys are present |
+| `agents/claude.py` | Extend `_build_subprocess_env()` to merge Langfuse env vars + inject `TRACEPARENT` |
 
-No other files change.
+No other files change. `tracing.py` and the `agent_run` span creation in `ClaudeAgentRunner.run()` are unchanged.
 
 ---
 
@@ -311,6 +255,8 @@ Then prompt text does not appear in any Langfuse span attributes
 
 ## Known limitations
 
+- **No parent-child nesting** — the Claude CLI Bun binary (v2.x) ignores `TRACEPARENT` and `OTEL_RESOURCE_ATTRIBUTES`. CLI spans always land as separate root traces in Langfuse. Correlation is via `claude_session_id` attribute on the `agent_run` span matching the `session.id` attribute on CLI traces. If a future CLI version supports W3C context propagation, re-enable `TRACEPARENT` injection in `_build_subprocess_env()`.
+- **OTLP endpoint URL** — the Python OTel exporter takes the full `/v1/traces` URL; the CLI subprocess takes the base URL (without `/v1/traces`) and appends it per OTel spec. `langfuse.py` stores both: `_otlp_endpoint` (full, for Python) and `_otlp_base_endpoint` (base, for subprocess env).
 - **Cache token breakdown** — `cache_read_input_tokens` and `cache_creation_input_tokens` always report 0 in OTel spans (SDK bug, open as of March 2026). Mitigated by reading `ResultMessage.usage` directly for the `agent_result` event. Cost displayed by Langfuse from OTel spans will overcount by ~35% for cached requests; the `agent_result` event carries the correct total.
 - **Subagent spans** — if the agent spawns a subagent via the `Agent` tool, subagent tool calls may not appear as nested spans (known SDK limitation). Top-level agent spans are always captured.
 

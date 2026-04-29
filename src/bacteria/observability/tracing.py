@@ -18,7 +18,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def setup_tracing(otlp_endpoint: str | None = None, console: bool = True) -> None:
+def setup_tracing(otlp_endpoint: str | None = None, console: bool = True, service_name: str = "bacteria") -> None:
     global _provider
 
     from opentelemetry import trace
@@ -26,7 +26,7 @@ def setup_tracing(otlp_endpoint: str | None = None, console: bool = True) -> Non
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
-    resource = Resource(attributes={"service.name": "bacteria"})
+    resource = Resource(attributes={"service.name": service_name})
     _provider = TracerProvider(resource=resource)
 
     if console:

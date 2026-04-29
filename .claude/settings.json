@@ -2,6 +2,10 @@
   "mcpServers": {
     "excalidraw": {
       "url": "https://api.excalidraw.com/api/v1/mcp"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     }
   },
   "hooks": {

@@ -46,8 +46,15 @@ class ObservabilitySettings(BaseSettings):
     log_format: str = "text"       # "text" | "json"
     log_level: str = "INFO"
 
+    service_name: str = "bacteria"
+
     otel_endpoint: str | None = None
     otel_console: bool = True
+
+    langfuse_secret_key: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_host: str | None = None
+    langfuse_otlp_endpoint: str | None = None
 
     metrics_queue_poll_interval: int = 30  # seconds between queue depth polls
 

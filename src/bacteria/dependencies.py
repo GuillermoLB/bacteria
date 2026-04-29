@@ -22,6 +22,7 @@ from bacteria.workflows.whatsapp import (
 
 
 def get_agent_runner() -> ClaudeAgentRunner:
+    from bacteria.observability import get_tracer
     settings = get_settings()
     return ClaudeAgentRunner(
         model=settings.agent.model,
@@ -29,6 +30,7 @@ def get_agent_runner() -> ClaudeAgentRunner:
         max_cost=settings.agent.max_cost,
         tool_server=bacteria_tool_server,
         allowed_tools=["mcp__bacteria__read_memory", "mcp__bacteria__write_memory"],
+        tracer=get_tracer(),
     )
 
 
